@@ -1,0 +1,6 @@
+{
+  "name": "WhatsApp SME Inventory Manager",
+  "description": "WhatsApp-first inventory and sales management assistant for SMEs with atomic transactions, audit logs, and stock dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

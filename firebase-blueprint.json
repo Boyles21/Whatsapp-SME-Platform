@@ -1,0 +1,242 @@
+{
+  "entities": {
+    "Business": {
+      "title": "Business",
+      "description": "Multi-tenant business tenant configuration",
+      "type": "object",
+      "properties": {
+        "businessId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "businessType": { "type": "string", "maxLength": 64 },
+        "currency": { "type": "string", "maxLength": 10 },
+        "country": { "type": "string", "maxLength": 64 },
+        "ownerId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["businessId", "name", "currency", "ownerId"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Application user associated with a business tenant",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "maxLength": 32 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["userId", "email", "businessId"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product in inventory catalog",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "unit": { "type": "string", "maxLength": 32 },
+        "costPrice": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "currentStock": { "type": "number" },
+        "reorderLevel": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["productId", "businessId", "name", "costPrice", "sellingPrice", "currentStock"]
+    },
+    "InventoryTransaction": {
+      "title": "InventoryTransaction",
+      "description": "Immutable ledger entry recording every stock change",
+      "type": "object",
+      "properties": {
+        "transactionId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "productId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["STOCK_IN", "SALE", "ADJUSTMENT_IN", "ADJUSTMENT_OUT", "RETURN"] },
+        "quantity": { "type": "number" },
+        "previousStock": { "type": "number" },
+        "newStock": { "type": "number" },
+        "unitCost": { "type": "number" },
+        "referenceId": { "type": "string", "maxLength": 128 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["transactionId", "businessId", "productId", "type", "quantity", "previousStock", "newStock"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Recorded sales transaction document",
+      "type": "object",
+      "properties": {
+        "saleId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "invoiceNumber": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "total": { "type": "number" },
+        "amountPaid": { "type": "number" },
+        "balanceDue": { "type": "number" },
+        "paymentStatus": { "type": "string", "enum": ["PAID", "PARTIAL", "UNPAID"] },
+        "paymentMethod": { "type": "string", "enum": ["CASH", "TRANSFER", "POS", "CREDIT"] },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["saleId", "businessId", "invoiceNumber", "total", "paymentStatus"]
+    },
+    "SaleItem": {
+      "title": "SaleItem",
+      "description": "Line items for a sale transaction",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string", "maxLength": 128 },
+        "saleId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "productId": { "type": "string", "maxLength": 128 },
+        "productNameSnapshot": { "type": "string", "maxLength": 150 },
+        "quantity": { "type": "number" },
+        "unitPrice": { "type": "number" },
+        "costPrice": { "type": "number" },
+        "total": { "type": "number" }
+      },
+      "required": ["itemId", "saleId", "businessId", "productId", "quantity", "unitPrice", "total"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer record for trade debtors or credit tracking",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "balance": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["customerId", "businessId", "name"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Payment records against customer balance or sale",
+      "type": "object",
+      "properties": {
+        "paymentId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "saleId": { "type": "string", "maxLength": 128 },
+        "amount": { "type": "number" },
+        "method": { "type": "string", "maxLength": 32 },
+        "reference": { "type": "string", "maxLength": 64 },
+        "recordedBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["paymentId", "businessId", "amount"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable audit record for every mutation",
+      "type": "object",
+      "properties": {
+        "logId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "enum": ["PRODUCT_CREATED", "STOCK_ADDED", "SALE_CREATED", "SALE_CANCELLED", "PRODUCT_UPDATED", "CUSTOMER_CREATED", "PAYMENT_RECORDED"] },
+        "entityType": { "type": "string", "maxLength": 64 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "metadata": { "type": "object" },
+        "timestamp": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["logId", "businessId", "userId", "action", "entityType", "entityId"]
+    },
+    "WhatsappMessageProcessing": {
+      "title": "WhatsappMessageProcessing",
+      "description": "Distributed idempotency claims for incoming WhatsApp and webhook messages",
+      "type": "object",
+      "properties": {
+        "messageId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "provider": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "enum": ["PROCESSING", "COMPLETED", "FAILED"] },
+        "response": { "type": "object" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "processedAt": { "type": "string", "maxLength": 64 },
+        "expiresAt": { "type": "string", "maxLength": 64 },
+        "error": { "type": "object" }
+      },
+      "required": ["messageId", "businessId", "provider", "status", "createdAt"]
+    },
+    "ConversationSession": {
+      "title": "ConversationSession",
+      "description": "Persistent conversation context and multi-turn clarification state",
+      "type": "object",
+      "properties": {
+        "conversationId": { "type": "string", "maxLength": 128 },
+        "businessId": { "type": "string", "maxLength": 128 },
+        "channel": { "type": "string", "maxLength": 32 },
+        "externalUserId": { "type": "string", "maxLength": 128 },
+        "phoneNumber": { "type": "string", "maxLength": 32 },
+        "pendingIntent": { "type": "string", "maxLength": 64 },
+        "pendingEntities": { "type": "object" },
+        "state": { "type": "string", "enum": ["ACTIVE", "AWAITING_CLARIFICATION", "CLOSED"] },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 },
+        "expiresAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["conversationId", "businessId", "channel", "externalUserId", "state"]
+    }
+  },
+  "firestore": {
+    "/businesses/{businessId}": {
+      "schema": "Business",
+      "description": "Tenant businesses"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles with business association"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Product catalog and authoritative stock balance"
+    },
+    "/inventoryTransactions/{transactionId}": {
+      "schema": "InventoryTransaction",
+      "description": "Immutable stock ledger transactions"
+    },
+    "/sales/{saleId}": {
+      "schema": "Sale",
+      "description": "Sales records"
+    },
+    "/saleItems/{itemId}": {
+      "schema": "SaleItem",
+      "description": "Line items for sales"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customer accounts"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Payments received"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Audit trail"
+    },
+    "/whatsappMessageProcessing/{messageId}": {
+      "schema": "WhatsappMessageProcessing",
+      "description": "Distributed webhook idempotency claims"
+    },
+    "/conversationSessions/{sessionId}": {
+      "schema": "ConversationSession",
+      "description": "Distributed multi-turn conversation sessions"
+    }
+  }
+}

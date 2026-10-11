@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions for authenticated client users
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserBusinessId() {
+      return getUserData().businessId;
+    }
+
+    function isBusinessMember(businessId) {
+      return isSignedIn() && businessId == getUserBusinessId();
+    }
+
+    // Businesses
+    match /businesses/{businessId} {
+      allow get: if isSignedIn() && (businessId == getUserBusinessId() || resource.data.ownerId == request.auth.uid);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(businessId) && request.resource.data.ownerId == request.auth.uid && request.resource.data.businessId == businessId;
+      allow update: if isSignedIn() && resource.data.ownerId == request.auth.uid && request.resource.data.businessId == businessId;
+      allow delete: if false;
+    }
+
+    // Users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (userId == request.auth.uid || resource.data.businessId == getUserBusinessId());
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && userId == request.auth.uid && request.resource.data.businessId == resource.data.businessId;
+      allow delete: if false;
+    }
+
+    // Products
+    match /products/{productId} {
+      allow get: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && isValidId(productId) && request.resource.data.businessId == getUserBusinessId();
+      // Direct client cannot alter currentStock directly - must go through server backend / transactions
+      allow update: if isSignedIn() && resource.data.businessId == getUserBusinessId() 
+        && request.resource.data.businessId == resource.data.businessId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['currentStock']);
+      allow delete: if false;
+    }
+
+    // Inventory Transactions (Immutable ledger records created by server)
+    match /inventoryTransactions/{transactionId} {
+      allow get: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && isValidId(transactionId) && request.resource.data.businessId == getUserBusinessId();
+      allow update, delete: if false;
+    }
+
+    // Sales (Immutable records)
+    match /sales/{saleId} {
+      allow get: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && isValidId(saleId) && request.resource.data.businessId == getUserBusinessId();
+      allow update, delete: if false;
+    }
+
+    // Sale Items
+    match /saleItems/{itemId} {
+      allow get: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && isValidId(itemId) && request.resource.data.businessId == getUserBusinessId();
+      allow update, delete: if false;
+    }
+
+    // Customers
+    match /customers/{customerId} {
+      allow get: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && isValidId(customerId) && request.resource.data.businessId == getUserBusinessId();
+      allow update: if isSignedIn() && resource.data.businessId == getUserBusinessId() && request.resource.data.businessId == resource.data.businessId;
+      allow delete: if false;
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow get: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && isValidId(paymentId) && request.resource.data.businessId == getUserBusinessId();
+      allow update, delete: if false;
+    }
+
+    // Audit Logs (Immutable ledger)
+    match /auditLogs/{logId} {
+      allow get: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow list: if isSignedIn() && resource.data.businessId == getUserBusinessId();
+      allow create: if isSignedIn() && isValidId(logId) && request.resource.data.businessId == getUserBusinessId();
+      allow update, delete: if false;
+    }
+
+    // WhatsApp Message Processing Idempotency (Server-authoritative only)
+    match /whatsappMessageProcessing/{messageId} {
+      allow read, write: if false;
+    }
+
+    // Conversation Sessions (Server-authoritative only)
+    match /conversationSessions/{sessionId} {
+      allow read, write: if false;
+    }
+  }
+}
